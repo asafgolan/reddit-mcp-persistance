@@ -10,5 +10,6 @@ authors = [
 requires-python = ">=3.10"
 dependencies = [
     "mcp[cli]>=1.6.0",
-    "praw"
+    "praw",
+    "python-dotenv>=1.1.0",
 ]

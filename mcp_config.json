@@ -1,0 +1,20 @@
+{
+  "mcpServers": {
+    "reddit": {
+      "command": "uv",
+      "args": [
+        "--directory",
+        "/Users/asafgolan/ultron/mcp-servers/reddit-mcp",
+        "run",
+        "server.py"
+      ],
+      "env": {
+        "REDDIT_CLIENT_ID": "your_client_id",
+        "REDDIT_CLIENT_SECRET": "your_client_secret",
+        "REDDIT_USER_AGENT": "RedditMCPServer/1.0",
+        "REDDIT_USERNAME": "your_username",
+        "REDDIT_PASSWORD": "your_password"
+      }
+    }
+  }
+}

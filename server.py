@@ -6,7 +6,11 @@ from os import getenv
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, TypeVar, cast
 
 import praw  # type: ignore
+from dotenv import load_dotenv
 from mcp.server.fastmcp import FastMCP
+
+# Load environment variables from .env file
+load_dotenv()
 
 F = TypeVar("F", bound=Callable[..., Any])
 if TYPE_CHECKING:
