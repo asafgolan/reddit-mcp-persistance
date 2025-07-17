@@ -15,3 +15,5 @@ wheels/
 .env
 
 .DS_Store
+
+.python-version

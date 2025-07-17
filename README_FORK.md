@@ -15,9 +15,6 @@
 ```bash
 git clone https://github.com/YOUR_USERNAME/reddit-mcp-extended.git
 cd reddit-mcp-extended
-
-# Install dependencies
-uv sync
 ```
 
 ### 2. Environment Configuration
@@ -27,7 +24,46 @@ cp .env.example .env
 
 # Edit .env with your Reddit API credentials
 # Get credentials from: https://www.reddit.com/prefs/apps
+
+# OPTIONAL: upstream on forked main branch
+# Check if dependencies changed after pulling upstream
+git pull upstream main
+
+
+#run setup script
+uv run python scripts/setup.py
 ```
+
+When to Run the Setup Script:
+1. Initial Setup (One-time)
+After cloning/forking the repository
+When setting up the project for the first time
+This is the primary use case
+2. After Upstream Updates
+When you pull new upstream changes that include:
+New dependencies in 
+pyproject.toml
+Updated Python version requirements
+Changes to the development environment
+3. Environment Refresh
+When you want a clean, fresh virtual environment
+If your current environment becomes corrupted or has issues
+When switching between different Python versions
+4. After Major Changes
+When the project structure changes significantly
+If there are new development tools or configurations
+When NOT to Run It:
+Regular daily development - Once set up, you just use uv run commands
+Minor code changes - No need to re-run for regular development
+Bug fixes or small updates - The existing environment should work fine
+Best Practice:
+bash
+# Check if dependencies changed after pulling upstream
+git pull upstream main
+# If pyproject.toml was modified, consider running:
+uv run python scripts/setup.py
+The setup script is designed to be safe to run multiple times - it will clean up the old environment and create a fresh one, so you can run it whenever you're unsure about your environment state.
+
 
 ### 3. Run with MCP Inspector
 ```bash
