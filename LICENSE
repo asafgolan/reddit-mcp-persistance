@@ -1,6 +1,9 @@
 MIT License
 
-Copyright (c) 2025 Arindam Majumder 
+Copyright (c) 2025 Asaf Golan 
+
+This software is a fork of the original reddit-mcp server by Arindam Majumder.
+git clone https://github.com/Arindam200/reddit-mcp.git
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
