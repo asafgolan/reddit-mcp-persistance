@@ -19,3 +19,6 @@ wheels/
 .python-version
 
 reddit_data
+
+response_structures.txt
+response_structures_full.txt
