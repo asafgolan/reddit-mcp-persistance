@@ -11,7 +11,7 @@ from dotenv import load_dotenv
 from mcp.server.fastmcp import FastMCP
 
 # Import SQLite-based storage
-from sqlite_storage import store_result
+from sqlite_storage import store_result, get_storage
 
 # Load environment variables from .env file
 load_dotenv()
