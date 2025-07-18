@@ -9,8 +9,8 @@ import praw  # type: ignore
 from dotenv import load_dotenv
 from mcp.server.fastmcp import FastMCP
 
-# Import file-based storage
-from file_storage import store_result
+# Import SQLite-based storage
+from sqlite_storage import store_result
 
 # Load environment variables from .env file
 load_dotenv()

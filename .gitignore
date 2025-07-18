@@ -18,7 +18,7 @@ wheels/
 
 .python-version
 
-reddit_data
+reddit_mcp.db
 
 response_structures.txt
 response_structures_full.txt
