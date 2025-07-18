@@ -409,6 +409,341 @@ class SQLiteStorage:
         
         return results
     
+    def get_recent_results(self, limit: int = 10) -> Dict[str, List[Dict[str, Any]]]:
+        """Get recent entities across all batches.
+        
+        Args:
+            limit: Maximum number of results per entity type
+            
+        Returns:
+            Dictionary with entities organized by type
+        """
+        cursor = self.connection.cursor()
+        
+        results = {
+            "users": [],
+            "posts": [],
+            "comments": [],
+            "subreddits": [],
+            "submissions": []
+        }
+        
+        # Get recent users
+        cursor.execute("""
+            SELECT * FROM users ORDER BY created_at DESC LIMIT ?
+        """, (limit,))
+        
+        columns = [desc[0] for desc in cursor.description]
+        for row in cursor.fetchall():
+            user_data = dict(zip(columns, row))
+            # Parse JSON fields
+            if user_data.get('subreddit_info'):
+                user_data['subreddit_info'] = json.loads(user_data['subreddit_info'])
+            if user_data.get('function_metadata'):
+                user_data['function_metadata'] = json.loads(user_data['function_metadata'])
+            results["users"].append(user_data)
+        
+        # Get recent posts
+        cursor.execute("""
+            SELECT * FROM posts ORDER BY created_at DESC LIMIT ?
+        """, (limit,))
+        
+        columns = [desc[0] for desc in cursor.description]
+        for row in cursor.fetchall():
+            post_data = dict(zip(columns, row))
+            # Parse JSON fields
+            if post_data.get('flair'):
+                post_data['flair'] = json.loads(post_data['flair'])
+            if post_data.get('function_metadata'):
+                post_data['function_metadata'] = json.loads(post_data['function_metadata'])
+            results["posts"].append(post_data)
+        
+        # Get recent comments
+        cursor.execute("""
+            SELECT * FROM comments ORDER BY created_at DESC LIMIT ?
+        """, (limit,))
+        
+        columns = [desc[0] for desc in cursor.description]
+        for row in cursor.fetchall():
+            comment_data = dict(zip(columns, row))
+            if comment_data.get('function_metadata'):
+                comment_data['function_metadata'] = json.loads(comment_data['function_metadata'])
+            results["comments"].append(comment_data)
+        
+        # Get recent subreddits
+        cursor.execute("""
+            SELECT * FROM subreddits ORDER BY created_at DESC LIMIT ?
+        """, (limit,))
+        
+        columns = [desc[0] for desc in cursor.description]
+        for row in cursor.fetchall():
+            subreddit_data = dict(zip(columns, row))
+            if subreddit_data.get('function_metadata'):
+                subreddit_data['function_metadata'] = json.loads(subreddit_data['function_metadata'])
+            results["subreddits"].append(subreddit_data)
+        
+        # Get recent submissions
+        cursor.execute("""
+            SELECT * FROM submissions ORDER BY created_at DESC LIMIT ?
+        """, (limit,))
+        
+        columns = [desc[0] for desc in cursor.description]
+        for row in cursor.fetchall():
+            submission_data = dict(zip(columns, row))
+            # Parse JSON fields
+            for field in ['flair', 'media', 'preview', 'awards', 'function_metadata']:
+                if submission_data.get(field):
+                    submission_data[field] = json.loads(submission_data[field])
+            results["submissions"].append(submission_data)
+        
+        return results
+    
+    def get_results_by_function(self, function_name: str, limit: int = 10) -> Dict[str, List[Dict[str, Any]]]:
+        """Get entities by source function name.
+        
+        Args:
+            function_name: Name of the function that generated the data
+            limit: Maximum number of results per entity type
+            
+        Returns:
+            Dictionary with entities organized by type
+        """
+        cursor = self.connection.cursor()
+        
+        results = {
+            "users": [],
+            "posts": [],
+            "comments": [],
+            "subreddits": [],
+            "submissions": []
+        }
+        
+        # Get users by function
+        cursor.execute("""
+            SELECT * FROM users WHERE source_function = ? ORDER BY created_at DESC LIMIT ?
+        """, (function_name, limit))
+        
+        columns = [desc[0] for desc in cursor.description]
+        for row in cursor.fetchall():
+            user_data = dict(zip(columns, row))
+            # Parse JSON fields
+            if user_data.get('subreddit_info'):
+                user_data['subreddit_info'] = json.loads(user_data['subreddit_info'])
+            if user_data.get('function_metadata'):
+                user_data['function_metadata'] = json.loads(user_data['function_metadata'])
+            results["users"].append(user_data)
+        
+        # Get posts by function
+        cursor.execute("""
+            SELECT * FROM posts WHERE source_function = ? ORDER BY created_at DESC LIMIT ?
+        """, (function_name, limit))
+        
+        columns = [desc[0] for desc in cursor.description]
+        for row in cursor.fetchall():
+            post_data = dict(zip(columns, row))
+            # Parse JSON fields
+            if post_data.get('flair'):
+                post_data['flair'] = json.loads(post_data['flair'])
+            if post_data.get('function_metadata'):
+                post_data['function_metadata'] = json.loads(post_data['function_metadata'])
+            results["posts"].append(post_data)
+        
+        # Get comments by function
+        cursor.execute("""
+            SELECT * FROM comments WHERE source_function = ? ORDER BY created_at DESC LIMIT ?
+        """, (function_name, limit))
+        
+        columns = [desc[0] for desc in cursor.description]
+        for row in cursor.fetchall():
+            comment_data = dict(zip(columns, row))
+            if comment_data.get('function_metadata'):
+                comment_data['function_metadata'] = json.loads(comment_data['function_metadata'])
+            results["comments"].append(comment_data)
+        
+        # Get subreddits by function
+        cursor.execute("""
+            SELECT * FROM subreddits WHERE source_function = ? ORDER BY created_at DESC LIMIT ?
+        """, (function_name, limit))
+        
+        columns = [desc[0] for desc in cursor.description]
+        for row in cursor.fetchall():
+            subreddit_data = dict(zip(columns, row))
+            if subreddit_data.get('function_metadata'):
+                subreddit_data['function_metadata'] = json.loads(subreddit_data['function_metadata'])
+            results["subreddits"].append(subreddit_data)
+        
+        # Get submissions by function
+        cursor.execute("""
+            SELECT * FROM submissions WHERE source_function = ? ORDER BY created_at DESC LIMIT ?
+        """, (function_name, limit))
+        
+        columns = [desc[0] for desc in cursor.description]
+        for row in cursor.fetchall():
+            submission_data = dict(zip(columns, row))
+            # Parse JSON fields
+            for field in ['flair', 'media', 'preview', 'awards', 'function_metadata']:
+                if submission_data.get(field):
+                    submission_data[field] = json.loads(submission_data[field])
+            results["submissions"].append(submission_data)
+        
+        return results
+    
+    def get_results_by_subreddit(self, subreddit_name: str, limit: int = 10) -> Dict[str, List[Dict[str, Any]]]:
+        """Get entities related to a specific subreddit.
+        
+        Args:
+            subreddit_name: Name of the subreddit
+            limit: Maximum number of results per entity type
+            
+        Returns:
+            Dictionary with entities organized by type
+        """
+        cursor = self.connection.cursor()
+        
+        results = {
+            "users": [],
+            "posts": [],
+            "comments": [],
+            "subreddits": [],
+            "submissions": []
+        }
+        
+        # Get posts from subreddit (using function_metadata to find subreddit info)
+        cursor.execute("""
+            SELECT * FROM posts WHERE function_metadata LIKE ? ORDER BY created_at DESC LIMIT ?
+        """, (f'%{subreddit_name}%', limit))
+        
+        columns = [desc[0] for desc in cursor.description]
+        for row in cursor.fetchall():
+            post_data = dict(zip(columns, row))
+            # Parse JSON fields
+            if post_data.get('flair'):
+                post_data['flair'] = json.loads(post_data['flair'])
+            if post_data.get('function_metadata'):
+                post_data['function_metadata'] = json.loads(post_data['function_metadata'])
+            results["posts"].append(post_data)
+        
+        # Get submissions from subreddit
+        cursor.execute("""
+            SELECT * FROM submissions WHERE subreddit = ? ORDER BY created_at DESC LIMIT ?
+        """, (subreddit_name, limit))
+        
+        columns = [desc[0] for desc in cursor.description]
+        for row in cursor.fetchall():
+            submission_data = dict(zip(columns, row))
+            # Parse JSON fields
+            for field in ['flair', 'media', 'preview', 'awards', 'function_metadata']:
+                if submission_data.get(field):
+                    submission_data[field] = json.loads(submission_data[field])
+            results["submissions"].append(submission_data)
+        
+        # Get subreddit info
+        cursor.execute("""
+            SELECT * FROM subreddits WHERE display_name = ? ORDER BY created_at DESC LIMIT ?
+        """, (subreddit_name, limit))
+        
+        columns = [desc[0] for desc in cursor.description]
+        for row in cursor.fetchall():
+            subreddit_data = dict(zip(columns, row))
+            if subreddit_data.get('function_metadata'):
+                subreddit_data['function_metadata'] = json.loads(subreddit_data['function_metadata'])
+            results["subreddits"].append(subreddit_data)
+        
+        return results
+    
+    def get_results_by_entity_type(self, entity_type: str, limit: int = 10) -> List[Dict[str, Any]]:
+        """Get entities of a specific type.
+        
+        Args:
+            entity_type: Type of entity ('users', 'posts', 'comments', 'subreddits', 'submissions')
+            limit: Maximum number of results
+            
+        Returns:
+            List of entities of the specified type
+        """
+        cursor = self.connection.cursor()
+        
+        if entity_type == 'users':
+            cursor.execute("""
+                SELECT * FROM users ORDER BY created_at DESC LIMIT ?
+            """, (limit,))
+            
+            columns = [desc[0] for desc in cursor.description]
+            results = []
+            for row in cursor.fetchall():
+                user_data = dict(zip(columns, row))
+                # Parse JSON fields
+                if user_data.get('subreddit_info'):
+                    user_data['subreddit_info'] = json.loads(user_data['subreddit_info'])
+                if user_data.get('function_metadata'):
+                    user_data['function_metadata'] = json.loads(user_data['function_metadata'])
+                results.append(user_data)
+            return results
+        
+        elif entity_type == 'posts':
+            cursor.execute("""
+                SELECT * FROM posts ORDER BY created_at DESC LIMIT ?
+            """, (limit,))
+            
+            columns = [desc[0] for desc in cursor.description]
+            results = []
+            for row in cursor.fetchall():
+                post_data = dict(zip(columns, row))
+                # Parse JSON fields
+                if post_data.get('flair'):
+                    post_data['flair'] = json.loads(post_data['flair'])
+                if post_data.get('function_metadata'):
+                    post_data['function_metadata'] = json.loads(post_data['function_metadata'])
+                results.append(post_data)
+            return results
+        
+        elif entity_type == 'comments':
+            cursor.execute("""
+                SELECT * FROM comments ORDER BY created_at DESC LIMIT ?
+            """, (limit,))
+            
+            columns = [desc[0] for desc in cursor.description]
+            results = []
+            for row in cursor.fetchall():
+                comment_data = dict(zip(columns, row))
+                if comment_data.get('function_metadata'):
+                    comment_data['function_metadata'] = json.loads(comment_data['function_metadata'])
+                results.append(comment_data)
+            return results
+        
+        elif entity_type == 'subreddits':
+            cursor.execute("""
+                SELECT * FROM subreddits ORDER BY created_at DESC LIMIT ?
+            """, (limit,))
+            
+            columns = [desc[0] for desc in cursor.description]
+            results = []
+            for row in cursor.fetchall():
+                subreddit_data = dict(zip(columns, row))
+                if subreddit_data.get('function_metadata'):
+                    subreddit_data['function_metadata'] = json.loads(subreddit_data['function_metadata'])
+                results.append(subreddit_data)
+            return results
+        
+        elif entity_type == 'submissions':
+            cursor.execute("""
+                SELECT * FROM submissions ORDER BY created_at DESC LIMIT ?
+            """, (limit,))
+            
+            columns = [desc[0] for desc in cursor.description]
+            results = []
+            for row in cursor.fetchall():
+                submission_data = dict(zip(columns, row))
+                # Parse JSON fields
+                for field in ['flair', 'media', 'preview', 'awards', 'function_metadata']:
+                    if submission_data.get(field):
+                        submission_data[field] = json.loads(submission_data[field])
+                results.append(submission_data)
+            return results
+        
+        else:
+            raise ValueError(f"Unknown entity type: {entity_type}")
+    
     def store_user(self, user_data: Dict[str, Any], batch_id: str, source_function: str = None, function_metadata: Dict[str, Any] = None) -> int:
         """Store user entity in database.
         

@@ -546,10 +546,15 @@ def get_top_posts(
             "metadata": {"fetched_at": time.time(), "post_count": len(formatted_posts)},
         }
         
-        # Store result to file
-        store_result(result, "post", f"{clean_subreddit}_{time_filter}")
+        # Store the result and return batch information
+        batch_result = store_result(result, "get_top_posts", {
+            "subreddit": clean_subreddit,
+            "time_filter": time_filter,
+            "limit": limit,
+            "fetched_at": result["metadata"]["fetched_at"]
+        })
         
-        return result
+        return batch_result
 
     except Exception as e:
         logger.error(f"Error getting top posts from r/{clean_subreddit}: {e}")
@@ -1596,6 +1601,158 @@ def who_am_i() -> Dict[str, Any]:
         if isinstance(e, (ValueError, RuntimeError)):
             raise
         raise RuntimeError(f"Failed to retrieve user information: {e}") from e
+
+
+@mcp.tool()
+def read_reddit_results(
+    batch_id: str = None,
+    function_name: str = None,
+    subreddit: str = None,
+    entity_type: str = None,
+    limit: int = 10
+) -> str:
+    """
+    Read stored Reddit MCP results from the persistent storage system.
+    
+    This function retrieves Reddit data (posts, users, subreddits, etc.) that was
+    previously stored by Reddit MCP tools. Results can be filtered by batch ID,
+    function name, subreddit, or entity type.
+    
+    Args:
+        batch_id: Specific batch ID to retrieve results for
+        function_name: Filter by source function (e.g., 'get_top_posts', 'get_user_info')
+        subreddit: Filter by subreddit name (e.g., 'Bitcoin', 'programming')
+        entity_type: Filter by entity type ('users', 'posts', 'comments', 'subreddits', 'submissions')
+        limit: Maximum number of results per entity type (1-100)
+        
+    Returns:
+        JSON string containing the retrieved Reddit data and metadata
+        
+    Raises:
+        ValueError: If parameters are invalid or no results found
+        RuntimeError: For other errors during the operation
+    """
+    try:
+        # Validate limit
+        if limit < 1 or limit > 100:
+            raise ValueError("Limit must be between 1 and 100")
+        
+        # Validate entity_type if provided
+        valid_entity_types = ['users', 'posts', 'comments', 'subreddits', 'submissions']
+        if entity_type and entity_type not in valid_entity_types:
+            raise ValueError(f"Invalid entity_type. Must be one of: {valid_entity_types}")
+        
+        storage = get_storage()
+        
+        # Query by batch_id
+        if batch_id:
+            results = storage.get_batch_results(batch_id)
+            batch_info = storage.get_batch_info(batch_id)
+            
+            # Filter by entity_type if specified
+            if entity_type:
+                if entity_type in results:
+                    filtered_results = {entity_type: results[entity_type]}
+                else:
+                    filtered_results = {entity_type: []}
+                results = filtered_results
+            
+            # Count total results
+            total_results = sum(len(entities) for entities in results.values())
+            
+            return json.dumps({
+                "status": "success",
+                "query_type": "batch_results",
+                "batch_id": batch_id,
+                "batch_info": batch_info,
+                "limit": limit,
+                "total_results": total_results,
+                "results": results
+            }, indent=2)
+        
+        # Query by function_name
+        elif function_name:
+            results = storage.get_results_by_function(function_name, limit)
+            
+            # Filter by entity_type if specified
+            if entity_type:
+                if entity_type in results:
+                    filtered_results = {entity_type: results[entity_type]}
+                else:
+                    filtered_results = {entity_type: []}
+                results = filtered_results
+            
+            # Count total results
+            total_results = sum(len(entities) for entities in results.values())
+            
+            return json.dumps({
+                "status": "success",
+                "query_type": "function_results",
+                "function_name": function_name,
+                "limit": limit,
+                "total_results": total_results,
+                "results": results
+            }, indent=2)
+        
+        # Query by subreddit
+        elif subreddit:
+            results = storage.get_results_by_subreddit(subreddit, limit)
+            
+            # Filter by entity_type if specified
+            if entity_type:
+                if entity_type in results:
+                    filtered_results = {entity_type: results[entity_type]}
+                else:
+                    filtered_results = {entity_type: []}
+                results = filtered_results
+            
+            # Count total results
+            total_results = sum(len(entities) for entities in results.values())
+            
+            return json.dumps({
+                "status": "success",
+                "query_type": "subreddit_results",
+                "subreddit": subreddit,
+                "limit": limit,
+                "total_results": total_results,
+                "results": results
+            }, indent=2)
+        
+        # Query by entity_type only
+        elif entity_type:
+            entity_results = storage.get_results_by_entity_type(entity_type, limit)
+            results = {entity_type: entity_results}
+            
+            return json.dumps({
+                "status": "success",
+                "query_type": "entity_type_results",
+                "entity_type": entity_type,
+                "limit": limit,
+                "total_results": len(entity_results),
+                "results": results
+            }, indent=2)
+        
+        # Default: get recent results
+        else:
+            results = storage.get_recent_results(limit)
+            
+            # Count total results
+            total_results = sum(len(entities) for entities in results.values())
+            
+            return json.dumps({
+                "status": "success",
+                "query_type": "recent_results",
+                "limit": limit,
+                "total_results": total_results,
+                "results": results
+            }, indent=2)
+            
+    except Exception as e:
+        logger.error(f"Error in read_reddit_results: {e}")
+        return json.dumps({
+            "status": "error",
+            "error": str(e)
+        }, indent=2)
 
 
 if __name__ == "__main__":
