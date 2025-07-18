@@ -17,3 +17,5 @@ wheels/
 .DS_Store
 
 .python-version
+
+reddit_data

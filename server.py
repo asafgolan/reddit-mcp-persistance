@@ -9,6 +9,9 @@ import praw  # type: ignore
 from dotenv import load_dotenv
 from mcp.server.fastmcp import FastMCP
 
+# Import file-based storage
+from file_storage import store_result
+
 # Load environment variables from .env file
 load_dotenv()
 
@@ -355,7 +358,7 @@ def get_user_info(username: str) -> Dict[str, Any]:
         _ = user.created_utc
 
         # Format the user info in a structured way
-        return {
+        result = {
             "username": user.name,
             "created_utc": user.created_utc,
             "comment_karma": user.comment_karma,
@@ -382,6 +385,11 @@ def get_user_info(username: str) -> Dict[str, Any]:
             if hasattr(user, "subreddit") and user.subreddit
             else None,
         }
+        
+        # Store result to file
+        store_result(result, "user", user.name)
+        
+        return result
     except Exception as e:
         logger.error(f"Error getting user info for u/{clean_username}: {e}")
         if hasattr(e, "message") and "USER_DOESNT_EXIST" in str(e):
@@ -531,12 +539,17 @@ def get_top_posts(
                 )
                 continue
 
-        return {
+        result = {
             "subreddit": clean_subreddit,
             "time_filter": time_filter,
             "posts": formatted_posts,
             "metadata": {"fetched_at": time.time(), "post_count": len(formatted_posts)},
         }
+        
+        # Store result to file
+        store_result(result, "post", f"{clean_subreddit}_{time_filter}")
+        
+        return result
 
     except Exception as e:
         logger.error(f"Error getting top posts from r/{clean_subreddit}: {e}")
@@ -586,7 +599,7 @@ def get_subreddit_info(subreddit_name: str) -> Dict[str, Any]:
         # Force fetch subreddit data to verify it exists
         _ = subreddit.display_name
 
-        return {
+        result = {
             "display_name": subreddit.display_name,
             "title": subreddit.title,
             "description": subreddit.description,
@@ -600,6 +613,11 @@ def get_subreddit_info(subreddit_name: str) -> Dict[str, Any]:
             "submission_type": getattr(subreddit, "submission_type", None),
             "quarantine": getattr(subreddit, "quarantine", False),
         }
+        
+        # Store result to file
+        store_result(result, "subreddit", subreddit.display_name)
+        
+        return result
     except Exception as e:
         logger.error(f"Error getting info for r/{clean_name}: {e}")
         if "private" in str(e).lower():
@@ -656,7 +674,12 @@ def get_trending_subreddits(limit: int = 5) -> "Dict[str, List[Dict[str, Any]]]"
         if not trending:
             logger.warning("No trending subreddits found")
 
-        return {"trending_subreddits": trending}
+        result = {"trending_subreddits": trending}
+        
+        # Store result to file
+        store_result(result, "trending", f"trending_{limit}")
+        
+        return result
 
     except Exception as e:
         logger.error(f"Error getting trending subreddits: {e}")
@@ -790,6 +813,9 @@ def get_subreddit_stats(subreddit: str) -> Dict[str, Any]:
             },
         }
 
+        # Store result to file
+        store_result(subreddit_data, "subreddit", clean_name)
+        
         return subreddit_data
 
     except Exception as e:
@@ -1216,6 +1242,9 @@ def get_submission_by_url(url: str) -> Dict[str, Any]:
             "visited": getattr(submission, "visited", False),
         }
 
+        # Store result to file
+        store_result(submission_data, "submission", submission.id)
+        
         return submission_data
 
     except Exception as e:
@@ -1400,6 +1429,9 @@ def get_submission_by_id(submission_id: str) -> Dict[str, Any]:
             "visited": getattr(submission, "visited", False),
         }
 
+        # Store result to file
+        store_result(submission_data, "submission", submission.id)
+        
         return submission_data
 
     except Exception as e:
@@ -1550,6 +1582,9 @@ def who_am_i() -> Dict[str, Any]:
             },
         }
 
+        # Store result to file
+        store_result(user_info, "user", current_user.name)
+        
         return user_info
 
     except Exception as e:
